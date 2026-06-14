@@ -122,23 +122,6 @@ function App() {
     }
   }
 
-  async function handleLoadState() {
-    try {
-      const data: RosterData = await go().LoadState();
-      if (data && data.weekColumns && data.weekColumns.length > 0) {
-        setRosterData(data);
-        setSelections(buildSelectionsFromDraft(data));
-        setStatusMsg("Loaded State successfully");
-        setStatusColor("#4CAF50");
-      } else if (data) {
-        setRosterData(data);
-      }
-    } catch (err: any) {
-      setStatusMsg("Error: " + (err.message || err));
-      setStatusColor("red");
-    }
-  }
-
   async function handleSaveState() {
     try {
       await go().SaveState(selections);
@@ -177,16 +160,6 @@ function App() {
     }
   }
 
-  async function handleExportExcel() {
-    if (!rosterData) return;
-    try {
-      await go().ExportExcel(selections);
-    } catch (err: any) {
-      setStatusMsg("Error: " + (err.message || err));
-      setStatusColor("red");
-    }
-  }
-
   async function handleExportImage() {
     if (!rosterData) return;
     const el = containerRef.current;
@@ -215,6 +188,7 @@ function App() {
         e.style.flex = 'none';
       }
       document.body.appendChild(clone);
+      clone.classList.add('export-capture');
 
       // Replace native <select> elements with readable spans
       const clonedSelects = clone.querySelectorAll<HTMLSelectElement>('select.role-select');
@@ -247,129 +221,132 @@ function App() {
       // Apply export-specific light theme styles
       const exportStyle = document.createElement('style');
       exportStyle.textContent = [
-        ':root {',
+        '.export-capture {',
         '--bg-main: #ffffff; --bg-sec: #f5f5f5; --fg-pri: #000000; --fg-sec: #444444;',
         '--input-bg: #ffffff; --input-border: #000000; --input-sel: #cce5ff;',
         '--dash-bg-warn: #ffcccc; --dash-bg-notice: #fff3cc;',
         '--dash-text-unavail: #999999; --active-cell-text: #000000;',
         '}',
-        '.app-container, .app-container * { font-family: "Open Sans", sans-serif !important; }',
-        '.grid-section, .dash-section, .toolbar, .main-content {',
+        '.export-capture .app-container, .export-capture .app-container * { font-family: "Open Sans", sans-serif !important; }',
+        '.export-capture .grid-section, .export-capture .dash-section, .export-capture .toolbar, .export-capture .main-content {',
         'background-color: #ffffff !important; color: #000000 !important;',
         '}',
         // Roster grid
-        '.roster-grid { border-collapse: collapse !important; }',
-        '.roster-grid th, .roster-grid td {',
+        '.export-capture .roster-grid { border-collapse: collapse !important; }',
+        '.export-capture .roster-grid th, .export-capture .roster-grid td {',
         'border: 1px solid #000000 !important; padding: 6px 8px !important;',
         'text-align: center !important; background-color: #ffffff !important; color: #000000 !important;',
         '}',
-        '.roster-grid th { background-color: #e0e0e0 !important; font-weight: bold !important; }',
-        '.week-header, .week-cell { background-color: #e8e8e8 !important; }',
-        '.col-sep, .col-sep-cell { display: none !important; }',
+        '.export-capture .roster-grid th { background-color: #e0e0e0 !important; font-weight: bold !important; }',
+        '.export-capture .week-header, .export-capture .week-cell { background-color: #e8e8e8 !important; }',
+        '.export-capture .col-sep, .export-capture .col-sep-cell { display: none !important; }',
         // Strip inner element styling to prevent double-box effect
-        '.roster-grid td *, .roster-grid th *,',
-        '.dash-member > *, .dash-member-empty > * {',
+        '.export-capture .roster-grid td *, .export-capture .roster-grid th *,',
+        '.export-capture .dash-member > *, .export-capture .dash-member-empty > * {',
         'background: transparent !important; border: none !important;',
         'box-shadow: none !important; border-radius: 0 !important;',
         'margin: 0 !important; padding: 0 !important;',
         '}',
         // Dashboard — 5 independent card blocks side by side
-        '.dash-grid {',
+        '.export-capture .dash-grid {',
         'width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;',
         'display: flex !important; justify-content: flex-start !important;',
         'align-items: flex-start !important; gap: 16px !important;',
         '}',
         // Each category is a bordered card sized to its content
-        '.dash-category-col {',
+        '.export-capture .dash-category-col {',
         'flex: 0 0 auto !important; width: auto !important;',
         'box-sizing: border-box !important; overflow: hidden !important;',
         'border: 1px solid #000000 !important;',
         '}',
         // P&W card: force 7-column grid (MD column excluded)
-        '.dash-category-col:nth-child(1) .dash-role-grid {',
+        '.export-capture .dash-category-col:nth-child(1) .dash-role-grid {',
         'grid-template-columns: repeat(7, 1fr) !important;',
         '}',
-        '.dash-role-grid {',
+        '.export-capture .dash-role-grid {',
         'display: grid !important; width: 100% !important; overflow: hidden !important;',
         '}',
         // Vertical gridlines between role columns
-        '.dash-role-grid > * {',
+        '.export-capture .dash-role-grid > * {',
         'min-width: 0 !important;',
         'border: none !important;',
         'border-right: 1px solid #e0e0e0 !important;',
         '}',
         // Last-column gridlines removed per category
-        '.dash-category-col:nth-child(1) .dash-role-grid > :nth-child(7n) { border-right: none !important; }',
-        '.dash-category-col:nth-child(2) .dash-role-grid > :nth-child(3n) { border-right: none !important; }',
-        '.dash-category-col:nth-child(3) .dash-role-grid > * { border-right: none !important; }',
-        '.dash-category-col:nth-child(4) .dash-role-grid > :nth-child(3n) { border-right: none !important; }',
-        '.dash-category-col:nth-child(5) .dash-role-grid > :nth-child(2n) { border-right: none !important; }',
+        '.export-capture .dash-category-col:nth-child(1) .dash-role-grid > :nth-child(7n) { border-right: none !important; }',
+        '.export-capture .dash-category-col:nth-child(2) .dash-role-grid > :nth-child(3n) { border-right: none !important; }',
+        '.export-capture .dash-category-col:nth-child(3) .dash-role-grid > * { border-right: none !important; }',
+        '.export-capture .dash-category-col:nth-child(4) .dash-role-grid > :nth-child(3n) { border-right: none !important; }',
+        '.export-capture .dash-category-col:nth-child(5) .dash-role-grid > :nth-child(2n) { border-right: none !important; }',
         // Sub-role headers: solid black baseline with spacing
-        '.dash-role-header {',
+        '.export-capture .dash-role-header {',
         'display: flex !important; width: 100% !important; box-sizing: border-box !important;',
         'text-align: center !important;',
         'border-bottom: 1px solid #000000 !important;',
         'margin-bottom: 4px !important; padding-bottom: 4px !important;',
         'background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important;',
         '}',
-        '.dash-cat-header { font-weight: bold !important; }',
+        '.export-capture .dash-cat-header { font-weight: bold !important; }',
         // Data rows with vertical spacing and bottom separator
-        '.dash-member {',
+        '.export-capture .dash-member {',
         'display: flex !important; justify-content: space-between !important;',
         'align-items: center !important; width: 100% !important; box-sizing: border-box !important;',
         'gap: 6px !important;',
         'padding: 6px 4px !important; min-height: 35px !important;',
         'border-bottom: 1px solid #f0f0f0 !important;',
         '}',
-        '.dash-member-empty {',
+        '.export-capture .dash-member-empty {',
         'padding: 6px 4px !important; width: 100% !important; box-sizing: border-box !important;',
         'min-height: 35px !important;',
         'border-bottom: 1px solid #f0f0f0 !important;',
         '}',
-        '.mem-name {',
+        '.export-capture .mem-name {',
         'color: #000000 !important; font-size: 12px !important; font-weight: 600 !important;',
         'white-space: nowrap !important; overflow: visible !important;',
         'text-overflow: clip !important; flex-grow: 1 !important; text-align: left !important;',
         '}',
-        '.mem-dots {',
+        '.export-capture .mem-dots {',
         'font-size: 10px !important; white-space: nowrap !important;',
         'flex-shrink: 0 !important; display: flex !important;',
         'gap: 2px !important; align-items: center !important;',
         '}',
-        '.mem-count {',
+        '.export-capture .mem-count {',
         'color: #666666 !important; font-size: 10px !important;',
         'white-space: nowrap !important; flex-shrink: 0 !important;',
         '}',
-        '.legend, .empty-state { color: #000000 !important; }',
-        // Brute-force white panels (excl. category headers — keep inline category color)
-        '.dash-grid, .dash-category-col, .dash-role-grid, .dash-role-header {',
+        '.export-capture .legend, .export-capture .empty-state { color: #000000 !important; }',
+        // Brute-force white panels (excl. category headers)
+        '.export-capture .dash-grid, .export-capture .dash-category-col,',
+        '.export-capture .dash-role-grid, .export-capture .dash-role-header {',
         'background: #ffffff !important; background-color: #ffffff !important; box-shadow: none !important;',
         '}',
         // Data rows: white defaults
-        '.dash-member, .dash-member-empty {',
+        '.export-capture .dash-member, .export-capture .dash-member-empty {',
         'background: #ffffff !important; background-color: #ffffff !important;',
         '}',
         // Highlighted rows: match Python PNG export
-        '.dash-member-warn {',
+        '.export-capture .dash-member-warn {',
         'background: #ffcccc !important; background-color: #ffcccc !important; color: #000000 !important;',
         '}',
-        '.dash-member-note {',
+        '.export-capture .dash-member-note {',
         'background: #ffeeb0 !important; background-color: #ffeeb0 !important; color: #000000 !important;',
         '}',
-        // Dark text for content (not category headers — keep inline color)
-        '.dash-role-header, .dash-member, .dash-member-empty,',
-        '.mem-name, .mem-count, .mem-dots, .dot-dash {',
+        // Dark text for content (not category headers)
+        '.export-capture .dash-role-header, .export-capture .dash-member,',
+        '.export-capture .dash-member-empty, .export-capture .mem-name,',
+        '.export-capture .mem-count, .export-capture .mem-dots,',
+        '.export-capture .dot-dash {',
         'color: #222222 !important;',
         '}',
         // Card border and internal grid lines
-        '.dash-category-col { border: 1px solid #000000 !important; }',
-        '.dash-role-grid > * { border-right: 1px solid #cccccc !important; }',
-        '.dash-role-header { border-bottom: 1px solid #000000 !important; }',
-        '.dash-member, .dash-member-empty { border-bottom: 1px solid #cccccc !important; }',
+        '.export-capture .dash-category-col { border: 1px solid #000000 !important; }',
+        '.export-capture .dash-role-grid > * { border-right: 1px solid #cccccc !important; }',
+        '.export-capture .dash-role-header { border-bottom: 1px solid #000000 !important; }',
+        '.export-capture .dash-member, .export-capture .dash-member-empty { border-bottom: 1px solid #cccccc !important; }',
         // Role sub-header: Python PNG export uses #eee
-        '.dash-role-header { background: #eeeeee !important; background-color: #eeeeee !important; }',
-        // Status X: Python PNG export uses #ccc; O uses inline style (black unassigned, category color assigned)
-        '.dot-x { color: #cccccc !important; }',
+        '.export-capture .dash-role-header { background: #eeeeee !important; background-color: #eeeeee !important; }',
+        // Status X: Python PNG export uses #ccc
+        '.export-capture .dot-x { color: #cccccc !important; }',
       ].join('\n');
       clone.appendChild(exportStyle);
 
@@ -408,6 +385,10 @@ function App() {
       }
       // If someone else was selected that equals MD, auto-update
       updateMDSuffixForWeek(week, newSelections);
+    }
+    // If Piano cleared, also clear Bass (Bass is locked when Piano has no selection)
+    if (role === "Piano" && !value) {
+      newSelections[week + "::Bass"] = "";
     }
     setSelections({ ...newSelections });
   }
@@ -518,13 +499,11 @@ function App() {
   function renderToolbar() {
     return (
       <div className="toolbar">
-        <button onClick={handleLoadFile}>Load Excel</button>
+        <button onClick={handleLoadFile}>Load File</button>
         <button onClick={handleSaveState}>Save State</button>
-        <button onClick={handleLoadState}>Load State</button>
         <span className="status" style={{ color: statusColor }}>{statusMsg}</span>
         <div className="toolbar-right">
           <button className="btn-sm" onClick={handleClear}>Clear</button>
-          <button className="btn-sm" onClick={handleExportExcel}>Export Excel</button>
           <button className="btn-sm" onClick={handleExportImage}>Export Image</button>
           <button className="btn-sm" onClick={toggleTheme}>Theme: {currentTheme}</button>
         </div>

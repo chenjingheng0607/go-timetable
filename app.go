@@ -33,15 +33,58 @@ func (a *App) GetRosterData() RosterData {
 
 func (a *App) LoadFile() (RosterData, error) {
 	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Open Excel",
+		Title: "Open Roster File",
 		Filters: []runtime.FileFilter{
-			{DisplayName: "Excel Files (*.xlsx)", Pattern: "*.xlsx"},
+			{DisplayName: "Roster Files (*.xlsx, *.json)", Pattern: "*.xlsx;*.json"},
 		},
 	})
 	if err != nil {
 		return RosterData{}, err
 	}
 	if path == "" {
+		return a.engine.BuildRosterData(), nil
+	}
+
+	if strings.HasSuffix(strings.ToLower(path), ".json") {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return RosterData{}, err
+		}
+
+		var state struct {
+			WeekColumns     []string                       `json:"weekColumns"`
+			AllMembers      map[string]MemberInfo          `json:"allMembers"`
+			AvailabilityMap map[string]map[string][]string `json:"availabilityMap"`
+			Selections      map[string]string              `json:"selections"`
+		}
+
+		if err := json.Unmarshal(data, &state); err != nil {
+			return RosterData{}, err
+		}
+
+		a.engine.WeekColumns = state.WeekColumns
+		a.engine.AllMembers = state.AllMembers
+		a.engine.AvailabilityMap = state.AvailabilityMap
+
+		if a.engine.AvailabilityMap == nil {
+			a.engine.AvailabilityMap = make(map[string]map[string][]string)
+		}
+
+		a.engine.InitialRoster = make(map[string]map[string]string)
+		for _, week := range a.engine.WeekColumns {
+			a.engine.InitialRoster[week] = make(map[string]string)
+		}
+
+		for key, val := range state.Selections {
+			parts := strings.SplitN(key, "::", 2)
+			if len(parts) == 2 {
+				week, role := parts[0], parts[1]
+				if _, ok := a.engine.InitialRoster[week]; ok {
+					a.engine.InitialRoster[week][role] = val
+				}
+			}
+		}
+
 		return a.engine.BuildRosterData(), nil
 	}
 
