@@ -71,7 +71,7 @@ func (e *RosterEngine) LoadFile(path string) error {
 	filledCol := -1
 	for name, idx := range colMap {
 		u := strings.ToUpper(name)
-		if strings.Contains(u, "FILLED") || strings.Contains(u, "\u2705") {
+		if strings.Contains(u, "FILLED") || strings.Contains(u, "✅") {
 			filledCol = idx
 			break
 		}
@@ -131,7 +131,7 @@ func (e *RosterEngine) LoadFile(path string) error {
 
 		if filledCol >= 0 && filledCol < len(row) {
 			val := strings.ToUpper(strings.TrimSpace(row[filledCol]))
-			if !(strings.Contains(val, "\u2705") || val == "TRUE" || val == "Y" || val == "1") {
+			if !(strings.Contains(val, "✅") || val == "TRUE" || val == "Y" || val == "1") {
 				continue
 			}
 		}
@@ -359,13 +359,7 @@ func (e *RosterEngine) GenerateDraft() {
 			}
 		}
 
-		if e.InitialRoster[week]["Piano"] == "" {
-			if e.InitialRoster[week]["Bass"] != "" {
-				bassist := e.InitialRoster[week]["Bass"]
-				e.InitialRoster[week]["Bass"] = ""
-				burnout[bassist]--
-			}
-		}
+		// Removed restriction: Bass role now independent of Piano - allows non-pianists to play bass without needing pianist arrangement
 
 		e.InitialRoster[week]["MD"] = ""
 		for _, br := range BandRoles {

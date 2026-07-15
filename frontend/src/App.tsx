@@ -383,17 +383,12 @@ function App() {
       if (newSelections[mdKey] && newSelections[mdKey] === value) {
         // If person selected as MD, keep their name clean
       }
-      // If someone else was selected that equals MD, auto-update
-      updateMDSuffixForWeek(week, newSelections);
     }
-    // If Piano cleared, also clear Bass (Bass is locked when Piano has no selection)
-    if (role === "Piano" && !value) {
-      newSelections[week + "::Bass"] = "";
-    }
+
     setSelections({ ...newSelections });
   }
 
-  function updateMDSuffixForWeek(week: string, sels: Record<string, string>) {
+  function updateMDSuffixForWeek(week: string) {
     // No-op in state-based approach; display handles suffixes
   }
 
@@ -482,18 +477,14 @@ function App() {
       return `color: red; background-color: ${bg};`;
     }
 
-    if (role === "Bass") {
-      const pianoVal = getCellValue(selections, rosterData, week, "Piano").replace(" (MD)", "").trim();
-      if (!pianoVal) return `color: red; background-color: ${bg};`;
-    }
+    // Bass validation removed - bass role no longer requires piano assignment, allowing non-pianists to play bass independently
 
     return `color: ${theme.fgPri || '#fff'}; background-color: ${bg};`;
   }
 
   function isBassLocked(week: string): boolean {
-    if (!rosterData) return false;
-    const pianoVal = getCellValue(selections, rosterData, week, "Piano").replace(" (MD)", "").trim();
-    return !pianoVal;
+    // Removed restriction: Bass selection now always available - any member can select regardless of piano assignment
+    return false;
   }
 
   function renderToolbar() {
