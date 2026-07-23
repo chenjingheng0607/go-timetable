@@ -1,6 +1,7 @@
+import { Fragment } from 'react';
 import { RosterData } from '../types';
-import { ROLES_ORDER } from '../constants';
-import { getCellValue } from '../utils';
+import { CATEGORY_ORDER } from '../constants';
+import { getCategoryHeaderStyle, getCellValue } from '../utils';
 
 interface RosterGridProps {
   rosterData: RosterData | null;
@@ -21,61 +22,39 @@ export function RosterGrid({
 }: RosterGridProps) {
   if (!rosterData) return <div className="empty-state">Load an Excel file to begin</div>;
   const { weekColumns, config } = rosterData;
-  const rtc = config.roleToCat;
-  const displayRoles = ROLES_ORDER;
-
-  const headerCells: React.ReactNode[] = [
-    <th key="week" className="week-header">Week</th>
-  ];
-  displayRoles.forEach((role, i) => {
-    if (i > 0) {
-      const prevInfo = rtc[displayRoles[i - 1]];
-      const curInfo = rtc[role];
-      if (prevInfo?.cat !== curInfo?.cat) {
-        headerCells.push(<th key={"sp-" + role} className="col-sep" />);
-      }
-    }
-    const info = rtc[role];
-    headerCells.push(
-      <th key={role} className="role-header" style={{ color: info?.color || '#fff' }}>
-        {role}
-      </th>
-    );
-  });
+  const roleSections = CATEGORY_ORDER.map(title => ({
+    title,
+    roles: config.categoryConfig[title]?.roles || [],
+  })).filter(section => section.roles.length > 0);
 
   const bodyRows = weekColumns.map(week => {
     const cells: React.ReactNode[] = [
       <td key="week" className="week-cell">{week}</td>
     ];
-    displayRoles.forEach((role, ci) => {
-      if (ci > 0) {
-        const prevInfo = rtc[displayRoles[ci - 1]];
-        const curInfo = rtc[role];
-        if (prevInfo?.cat !== curInfo?.cat) {
-          cells.push(<td key={"sp-" + week + "-" + role} className="col-sep-cell" />);
-        }
-      }
-      const key = week + "::" + role;
-      const currentVal = getCellValue(selections, rosterData, week, role);
-      const cleanVal = currentVal.replace(" (MD)", "").trim();
-      const locked = role === "Bass" && isBassLocked(week);
-      cells.push(
-        <td key={key}>
-          <select
-            value={cleanVal}
-            disabled={locked}
-            className="role-select"
-            onChange={(e) => onSelectionChange(week, role, e.target.value)}
-          >
-            <option value=""></option>
-            {getAvailableOptions(week, role).map(name => (
-              <option key={name} value={name}>
-                {getDisplayName(week, role, name)}
-              </option>
-            ))}
-          </select>
-        </td>
-      );
+    roleSections.forEach(section => {
+      section.roles.forEach(role => {
+        const key = week + "::" + role;
+        const currentVal = getCellValue(selections, rosterData, week, role);
+        const cleanVal = currentVal.replace(" (MD)", "").trim();
+        const locked = role === "Bass" && isBassLocked(week);
+        cells.push(
+          <td key={key}>
+            <select
+              value={cleanVal}
+              disabled={locked}
+              className="role-select"
+              onChange={(e) => onSelectionChange(week, role, e.target.value)}
+            >
+              <option value=""></option>
+              {getAvailableOptions(week, role).map(name => (
+                <option key={name} value={name}>
+                  {getDisplayName(week, role, name)}
+                </option>
+              ))}
+            </select>
+          </td>
+        );
+      });
     });
     return <tr key={week}>{cells}</tr>;
   });
@@ -83,7 +62,37 @@ export function RosterGrid({
   return (
     <div className="grid-wrapper">
       <table className="roster-grid">
-        <thead><tr>{headerCells}</tr></thead>
+        <thead>
+          <tr>
+            <th className="week-header" rowSpan={2}>Week</th>
+            {roleSections.map(section => (
+              <th
+                key={section.title}
+                className="section-heading"
+                colSpan={section.roles.length}
+                style={getCategoryHeaderStyle(config.categoryConfig[section.title].color)}
+              >
+                {section.title}
+              </th>
+            ))}
+          </tr>
+          <tr>
+            {roleSections.map(section => (
+              <Fragment key={section.title}>
+                {section.roles.map(role => {
+                  return (
+                    <th
+                      key={role}
+                      className="role-header"
+                    >
+                      {role}
+                    </th>
+                  );
+                })}
+              </Fragment>
+            ))}
+          </tr>
+        </thead>
         <tbody>{bodyRows}</tbody>
       </table>
     </div>

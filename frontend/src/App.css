@@ -122,17 +122,21 @@ html, body, #root {
   color: var(--fg-pri);
   text-align: left;
 }
+.section-heading {
+  border: 0;
+  border-top: 1px solid var(--input-border);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 5px 3px !important;
+  text-align: center;
+}
 .role-header {
   font-weight: bold;
   min-width: 100px;
   padding: 3px 2px !important;
   font-size: 11px;
-}
-.col-sep,
-.col-sep-cell {
-  width: 1px;
-  padding: 0 !important;
-  border-left: 1px solid var(--input-border);
+  border: 1px solid var(--input-border);
 }
 .week-cell {
   font-weight: bold;

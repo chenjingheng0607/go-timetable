@@ -1,6 +1,6 @@
 import { RosterData, Theme } from '../types';
 import { ROLES_ORDER, CATEGORY_ORDER } from '../constants';
-import { getCellValue } from '../utils';
+import { getCategoryHeaderStyle, getCellValue } from '../utils';
 
 interface DashboardProps {
   rosterData: RosterData | null;
@@ -114,8 +114,8 @@ export function Dashboard({ rosterData, selections, theme }: DashboardProps) {
           const maxRows = Math.max(...roleData.map(rd => rd.members.length));
 
           return (
-          <div key={cat} className="dash-category-col">
-            <div className="dash-cat-header" style={{ backgroundColor: catData.color, color: catData.textCol }}>
+            <div key={cat} className="dash-category-col">
+            <div className="dash-cat-header" style={getCategoryHeaderStyle(catData.color)}>
               {cat}
             </div>
             <div className="dash-role-grid" style={{ gridTemplateColumns: `repeat(${filteredRoles.length}, 1fr)` }}>
