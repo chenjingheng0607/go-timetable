@@ -16,10 +16,18 @@ type RosterEngine struct {
 	AvailabilityMap map[string]map[string][]string
 	InitialRoster   map[string]map[string]string
 	AllMembers      map[string]MemberInfo
+	CleanupOptions  []string
 }
 
 func NewRosterEngine() *RosterEngine {
 	return &RosterEngine{}
+}
+
+func (e *RosterEngine) GetCleanupOptions() []string {
+	if len(e.CleanupOptions) > 0 {
+		return e.CleanupOptions
+	}
+	return CleanupOptions
 }
 
 func (e *RosterEngine) LoadFile(path string) error {
@@ -29,8 +37,93 @@ func (e *RosterEngine) LoadFile(path string) error {
 	}
 	defer f.Close()
 
-	sheetName := f.GetSheetName(0)
-	rows, err := f.GetRows(sheetName)
+	sheetList := f.GetSheetList()
+	if len(sheetList) == 0 {
+		return errors.New("no sheets found in excel file")
+	}
+
+	mainSheet := ""
+	lgSheet := ""
+
+	for _, name := range sheetList {
+		rows, err := f.GetRows(name)
+		if err != nil {
+			continue
+		}
+		for _, row := range rows {
+			for _, cell := range row {
+				if strings.TrimSpace(cell) == "Name" {
+					mainSheet = name
+					break
+				}
+			}
+			if mainSheet != "" {
+				break
+			}
+		}
+		if mainSheet != "" {
+			break
+		}
+	}
+
+	if mainSheet == "" {
+		mainSheet = sheetList[0]
+	}
+
+	for _, name := range sheetList {
+		if name == mainSheet {
+			continue
+		}
+		u := strings.ToUpper(strings.TrimSpace(name))
+		if strings.Contains(u, "LIFE") || strings.Contains(u, "LG") || strings.Contains(u, "CLEANUP") || strings.Contains(u, "GROUP") {
+			lgSheet = name
+			break
+		}
+	}
+
+	if lgSheet == "" && len(sheetList) > 1 {
+		for _, name := range sheetList {
+			if name != mainSheet {
+				lgSheet = name
+				break
+			}
+		}
+	}
+
+	e.CleanupOptions = nil
+	if lgSheet != "" {
+		lgRows, err := f.GetRows(lgSheet)
+		if err == nil {
+			var lgOptions []string
+			seenLG := make(map[string]bool)
+
+			for _, row := range lgRows {
+				for _, cell := range row {
+					val := strings.TrimSpace(cell)
+					if val == "" {
+						continue
+					}
+					uVal := strings.ToUpper(val)
+					isHeader := uVal == "LIFE GROUP" || uVal == "LIFE GROUPS" || uVal == "LG" || uVal == "CLEANUP" ||
+						uVal == "GROUPS" || uVal == "GROUP" || uVal == "NAME" || strings.HasPrefix(uVal, "LIFE GROUP") ||
+						strings.HasPrefix(uVal, "CLEANUP") || strings.HasPrefix(uVal, "LG GROUP")
+					if isHeader {
+						continue
+					}
+					if !seenLG[val] {
+						seenLG[val] = true
+						lgOptions = append(lgOptions, val)
+					}
+				}
+			}
+
+			if len(lgOptions) > 0 {
+				e.CleanupOptions = lgOptions
+			}
+		}
+	}
+
+	rows, err := f.GetRows(mainSheet)
 	if err != nil {
 		return err
 	}
@@ -111,13 +204,14 @@ func (e *RosterEngine) LoadFile(path string) error {
 	}
 
 	e.AvailabilityMap = make(map[string]map[string][]string)
+	cleanupOpts := e.GetCleanupOptions()
 	for _, week := range e.WeekColumns {
 		am := make(map[string][]string)
 		for _, role := range RolesOrder {
 			am[role] = []string{}
 		}
-		am["Cleanup 1"] = append([]string{}, CleanupOptions...)
-		am["Cleanup 2"] = append([]string{}, CleanupOptions...)
+		am["Cleanup 1"] = append([]string{}, cleanupOpts...)
+		am["Cleanup 2"] = append([]string{}, cleanupOpts...)
 		e.AvailabilityMap[week] = am
 	}
 
@@ -389,11 +483,13 @@ func (e *RosterEngine) ClearRoster() {
 }
 
 func (e *RosterEngine) BuildRosterData() RosterData {
+	cfg := getConfigData()
+	cfg.CleanupOptions = e.GetCleanupOptions()
 	return RosterData{
 		WeekColumns:     e.WeekColumns,
 		AllMembers:      e.AllMembers,
 		AvailabilityMap: e.AvailabilityMap,
 		InitialRoster:   e.InitialRoster,
-		Config:          getConfigData(),
+		Config:          cfg,
 	}
 }

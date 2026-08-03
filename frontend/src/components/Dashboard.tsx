@@ -80,11 +80,12 @@ export function Dashboard({ rosterData, selections, theme }: DashboardProps) {
             }> = [];
 
             if (cat === "LG") {
+              const avStr = weekColumns.map(() => 'X').join('');
               for (const o of config.cleanupOptions) {
                 const act = clActive[o]?.has(role) || false;
                 let sv = 2;
                 if (act) sv = (clCounts[o] || 0) >= 3 ? 0 : 1;
-                members.push({ name: o, av: "XXXX", c: clCounts[o] || 0, act, sv });
+                members.push({ name: o, av: avStr, c: clCounts[o] || 0, act, sv });
               }
             } else {
               for (const [name, info] of Object.entries(allMembers)) {

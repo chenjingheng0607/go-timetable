@@ -56,6 +56,7 @@ func (a *App) LoadFile() (RosterData, error) {
 			AllMembers      map[string]MemberInfo          `json:"allMembers"`
 			AvailabilityMap map[string]map[string][]string `json:"availabilityMap"`
 			Selections      map[string]string              `json:"selections"`
+			CleanupOptions  []string                       `json:"cleanupOptions"`
 		}
 
 		if err := json.Unmarshal(data, &state); err != nil {
@@ -65,6 +66,7 @@ func (a *App) LoadFile() (RosterData, error) {
 		a.engine.WeekColumns = state.WeekColumns
 		a.engine.AllMembers = state.AllMembers
 		a.engine.AvailabilityMap = state.AvailabilityMap
+		a.engine.CleanupOptions = state.CleanupOptions
 
 		if a.engine.AvailabilityMap == nil {
 			a.engine.AvailabilityMap = make(map[string]map[string][]string)
@@ -119,6 +121,7 @@ func (a *App) SaveState(selections map[string]string) error {
 		"allMembers":      a.engine.AllMembers,
 		"availabilityMap": a.engine.AvailabilityMap,
 		"selections":      selections,
+		"cleanupOptions":  a.engine.GetCleanupOptions(),
 	}
 
 	file, err := os.Create(path)
@@ -152,10 +155,11 @@ func (a *App) LoadState() (RosterData, error) {
 	}
 
 	var state struct {
-		WeekColumns     []string              `json:"weekColumns"`
-		AllMembers      map[string]MemberInfo `json:"allMembers"`
+		WeekColumns     []string                       `json:"weekColumns"`
+		AllMembers      map[string]MemberInfo          `json:"allMembers"`
 		AvailabilityMap map[string]map[string][]string `json:"availabilityMap"`
-		Selections      map[string]string     `json:"selections"`
+		Selections      map[string]string              `json:"selections"`
+		CleanupOptions  []string                       `json:"cleanupOptions"`
 	}
 
 	if err := json.Unmarshal(data, &state); err != nil {
@@ -165,6 +169,7 @@ func (a *App) LoadState() (RosterData, error) {
 	a.engine.WeekColumns = state.WeekColumns
 	a.engine.AllMembers = state.AllMembers
 	a.engine.AvailabilityMap = state.AvailabilityMap
+	a.engine.CleanupOptions = state.CleanupOptions
 
 	if a.engine.AvailabilityMap == nil {
 		a.engine.AvailabilityMap = make(map[string]map[string][]string)
