@@ -1,3 +1,82 @@
-build/bin
-node_modules
-frontend/dist
+# ── Go & Binaries ──
+bin/
+build/bin/
+*.exe
+*.dll
+*.so
+*.aab
+*.apk
+*.test
+*.out
+*.prof
+/go-timetable
+/go-timetable.exe
+
+# ── Task / Build Cache ──
+.task/
+.cache/
+
+# ── Frontend & Node ──
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+frontend/.vite/
+.vite/
+.pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+npm-debug.log*
+*.log
+.pnpm-store/
+
+# Keep bindings (generated but required for TS) — do NOT ignore
+# frontend/bindings/
+
+# ── Android & Gradle ──
+.gradle/
+build/android/.gradle/
+build/android/app/build/
+build/android/build/
+build/android/gen/
+build/android/overlay.json
+build/ios/xcode/overlay.json
+build/ios/xcode/gen/
+app/build/
+build/app/build/
+local.properties
+*.jks
+*.keystore
+*.p12
+*.keystore
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+# Gradle wrapper jar is tracked (needed), but daemon logs not
+.gradle-wrapper/
+
+# ── OS & Editor Caches ──
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.orig
+
+# ── Env & Secrets ──
+.env
+.env.local
+.env.*.local
+*.env
+keystore.properties
+signing.properties
+
+# ── Wails specific ──
+# wails.json is kept for reference (v2) but build uses build/config.yml — keep both
+
+# ── Misc ──
+coverage.out
+coverage.html

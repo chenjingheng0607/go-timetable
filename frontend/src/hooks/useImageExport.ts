@@ -1,26 +1,37 @@
 import { useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import { RosterData } from '../types';
+import { ExportImage } from "../../bindings/go-timetable/app";
 
 export function useImageExport(
   rosterData: RosterData | null,
   containerRef: React.RefObject<HTMLDivElement | null>,
-  go: () => any,
   setStatusMsg: (msg: string) => void,
   setStatusColor: (color: string) => void,
 ) {
   const handleExportImage = useCallback(async () => {
-    if (!rosterData) return;
+    if (!rosterData) {
+      console.warn("[ExportImage] no rosterData");
+      setStatusMsg("No data to export");
+      setStatusColor("red");
+      return;
+    }
     const el = containerRef.current;
-    if (!el) return;
+    if (!el) {
+      console.warn("[ExportImage] no containerRef");
+      return;
+    }
+    let clone: HTMLElement | null = null;
+    let exportStyle: HTMLStyleElement | null = null;
     try {
+      console.log("[ExportImage] starting capture");
       const liveSelects = el.querySelectorAll<HTMLSelectElement>('select.role-select');
       const selectTexts: string[] = [];
       for (const sel of liveSelects) {
         selectTexts.push(sel.options[sel.selectedIndex]?.textContent || sel.value || '');
       }
 
-      const clone = el.cloneNode(true) as HTMLElement;
+      clone = el.cloneNode(true) as HTMLElement;
       clone.style.position = 'fixed';
       clone.style.left = '-9999px';
       clone.style.top = '0';
@@ -65,7 +76,7 @@ export function useImageExport(
         selIdx++;
       }
 
-      const exportStyle = document.createElement('style');
+      exportStyle = document.createElement('style');
       exportStyle.textContent = [
         '.export-capture {',
         '--bg-main: #ffffff; --bg-sec: #f5f5f5; --fg-pri: #000000; --fg-sec: #444444;',
@@ -194,15 +205,36 @@ export function useImageExport(
         logging: false,
       });
 
-      document.body.removeChild(clone);
+      // Remove clone before Go call to avoid overlay lingering on failure
+      if (clone && clone.parentNode) {
+        document.body.removeChild(clone);
+        clone = null;
+      }
 
       const base64 = canvas.toDataURL("image/png");
-      await go().ExportImage(base64);
+      console.log("[ExportImage] canvas captured, invoking Go binding");
+      await ExportImage(base64);
+      console.log("[ExportImage] Go binding success");
+      // Show Download path with timestamp matching Go's roster_YYYYMMDD_HHMM.png
+      const ts = new Date();
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      const tsStr = `${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}`;
+      setStatusMsg(`Saved to Download/roster_${tsStr}.png`);
+      setStatusColor("#4CAF50");
     } catch (err: any) {
+      console.error("[ExportImage] failed:", err);
       setStatusMsg("Error: " + (err.message || err));
       setStatusColor("red");
+    } finally {
+      if (clone && clone.parentNode) {
+        try { document.body.removeChild(clone); } catch (_) {}
+      }
+      // exportStyle is inside clone, but guard
+      if (exportStyle && exportStyle.parentNode) {
+        try { exportStyle.parentNode.removeChild(exportStyle); } catch (_) {}
+      }
     }
-  }, [rosterData, containerRef, go, setStatusMsg, setStatusColor]);
+  }, [rosterData, containerRef, setStatusMsg, setStatusColor]);
 
   return { handleExportImage };
 }
