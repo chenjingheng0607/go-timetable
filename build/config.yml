@@ -5,12 +5,12 @@ version: '3'
 
 # This information is used to generate the build assets.
 info:
-  companyName: "Example" # The name of the company
-  productName: "Auto-Roster" # The name of the application
-  productIdentifier: "com.example.gotimetable" # The unique product identifier
-  description: "Auto-Roster / Go Timetable - Wails v3 Android Demo" # The application description
-  copyright: "(c) 2026, Example" # Copyright text
-  comments: "Wails v3 Android" # Comments
+  companyName: "CJH" # The name of the company
+  productName: "FL Timetable" # The name of the application
+  productIdentifier: "com.cjh.fltimetable" # The unique product identifier
+  description: "FL Timetable" # The application description
+  copyright: "(c) 2026, CJH" # Copyright text
+  comments: "Build with Wails v3" # Comments
   version: "0.0.1" # The application version
   # cfBundleIconName: "appicon" # The macOS icon name in Assets.car icon bundles (optional)
   #                               # Should match the name of your .icon file without the extension
