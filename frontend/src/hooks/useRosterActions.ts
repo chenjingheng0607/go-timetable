@@ -1,8 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { RosterData } from '../types';
 import { buildSelectionsFromDraft } from '../utils';
-
-declare const window: any;
+import { LoadFile, SaveState, GenerateDraft, ClearSelections } from "../../bindings/go-timetable/app";
 
 export function useRosterActions() {
   const [rosterData, setRosterData] = useState<RosterData | null>(null);
@@ -10,11 +9,11 @@ export function useRosterActions() {
   const [statusMsg, setStatusMsg] = useState("No file loaded");
   const [statusColor, setStatusColor] = useState("red");
 
-  const go = useCallback(() => window.go.main.App, []);
-
   async function handleLoadFile() {
     try {
-      const data: RosterData = await go().LoadFile();
+      console.log("[LoadFile] invoking Wails binding");
+      const data = (await LoadFile()) as unknown as RosterData;
+      console.log("[LoadFile] success", data?.weekColumns?.length, "weeks");
       if (data && data.weekColumns && data.weekColumns.length > 0) {
         setRosterData(data);
         setSelections(buildSelectionsFromDraft(data));
@@ -22,8 +21,11 @@ export function useRosterActions() {
         setStatusColor("#4CAF50");
       } else if (data) {
         setRosterData(data);
+        setStatusMsg("Loaded (no weeks)");
+        setStatusColor("#FFA500");
       }
     } catch (err: any) {
+      console.error("[LoadFile] failed:", err);
       setStatusMsg("Error: " + (err.message || err));
       setStatusColor("red");
     }
@@ -31,37 +33,64 @@ export function useRosterActions() {
 
   async function handleSaveState() {
     try {
-      await go().SaveState(selections);
+      console.log("[SaveState] invoking with", Object.keys(selections).length, "selections");
+      await SaveState(selections);
+      console.log("[SaveState] success");
+      setStatusMsg("Saved to Download/roster_state.json");
+      setStatusColor("#4CAF50");
     } catch (err: any) {
+      console.error("[SaveState] failed:", err);
       setStatusMsg("Error: " + (err.message || err));
       setStatusColor("red");
     }
   }
 
   async function handleGenerateDraft() {
-    if (!rosterData) return;
+    if (!rosterData) {
+      console.warn("[GenerateDraft] no rosterData");
+      setStatusMsg("No file loaded");
+      setStatusColor("red");
+      return;
+    }
     try {
-      const data: RosterData = await go().GenerateDraft();
+      console.log("[GenerateDraft] invoking");
+      const data = (await GenerateDraft()) as unknown as RosterData;
+      console.log("[GenerateDraft] success");
       setRosterData(data);
       setSelections(buildSelectionsFromDraft(data));
       setStatusMsg("Draft generated");
       setStatusColor("#4CAF50");
     } catch (err: any) {
+      console.error("[GenerateDraft] failed:", err);
       setStatusMsg("Error: " + (err.message || err));
       setStatusColor("red");
     }
   }
 
   async function handleClear() {
-    if (!rosterData) return;
-    if (!window.confirm("Clear all?")) return;
+    if (!rosterData) {
+      console.warn("[Clear] no rosterData");
+      return;
+    }
     try {
-      const data: RosterData = await go().ClearSelections();
+      if (!window.confirm("Clear all?")) {
+        console.log("[Clear] cancelled by user");
+        return;
+      }
+    } catch (confirmErr) {
+      console.error("[Clear] confirm failed:", confirmErr);
+      // Fall through to clear anyway on Android where confirm may be unsupported
+    }
+    try {
+      console.log("[Clear] invoking ClearSelections");
+      const data = (await ClearSelections()) as unknown as RosterData;
+      console.log("[Clear] success");
       setRosterData(data);
       setSelections({});
       setStatusMsg("Cleared");
       setStatusColor("#4CAF50");
     } catch (err: any) {
+      console.error("[Clear] failed:", err);
       setStatusMsg("Error: " + (err.message || err));
       setStatusColor("red");
     }
@@ -74,7 +103,6 @@ export function useRosterActions() {
     setSelections,
     statusMsg,
     statusColor,
-    go,
     setStatusMsg,
     setStatusColor,
     handleLoadFile,

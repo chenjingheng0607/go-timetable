@@ -25,9 +25,11 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   background-color: var(--bg-main);
   color: var(--fg-pri);
   font-family: 'Open Sans', Arial, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* ── Toolbar ── */
@@ -35,11 +37,18 @@ html, body, #root {
   display: flex;
   align-items: center;
   padding: 4px 10px;
+  padding-top: calc(4px + env(safe-area-inset-top));
+  padding-left: calc(10px + env(safe-area-inset-left));
+  padding-right: calc(10px + env(safe-area-inset-right));
   gap: 6px;
   background-color: var(--bg-sec);
   border-bottom: 1px solid var(--input-border);
   flex-shrink: 0;
-  min-height: 38px;
+  min-height: 44px; /* 44px touch target per spec */
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 100;
+  pointer-events: auto;
 }
 .toolbar button {
   background-color: var(--input-bg);
@@ -50,10 +59,25 @@ html, body, #root {
   cursor: pointer;
   font-size: 12px;
   white-space: nowrap;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  pointer-events: auto;
+  position: relative;
+  z-index: 101;
 }
 .toolbar button:hover {
   background-color: var(--input-sel);
   color: white;
+}
+.toolbar button:active {
+  transform: scale(0.97);
 }
 .toolbar .status {
   margin-left: 8px;
@@ -71,23 +95,32 @@ html, body, #root {
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  min-height: 0; /* allow flex children to shrink on mobile */
 }
 .grid-section {
   flex: 1;
   overflow: hidden;
   border-bottom: 2px solid var(--input-border);
+  min-height: 0;
 }
 .dash-section {
   flex: 1;
   overflow: hidden;
+  min-height: 0;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .dash-section .scroll-area {
   overflow-x: auto;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 .scroll-area {
   height: 100%;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
 }
 
 .empty-state {
@@ -103,6 +136,10 @@ html, body, #root {
 .grid-wrapper {
   padding: 6px;
   white-space: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
 }
 .roster-grid {
   border-collapse: collapse;
@@ -157,6 +194,8 @@ html, body, #root {
   font-size: 11px;
   cursor: pointer;
   height: 22px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .role-select:focus {
   outline: none;
@@ -171,6 +210,7 @@ html, body, #root {
 /* ── Dashboard ── */
 .dashboard {
   padding: 4px 6px;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom));
 }
 .legend {
   display: flex;
@@ -192,6 +232,9 @@ html, body, #root {
   display: flex;
   flex-direction: row;
   gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
 }
 .dash-category-col {
   display: flex;
@@ -285,3 +328,92 @@ html, body, #root {
 ::-webkit-scrollbar-track { background: var(--bg-main); }
 ::-webkit-scrollbar-thumb { background: var(--input-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--fg-sec); }
+
+/* ── Mobile Responsive & Touch ── */
+@media (max-width: 768px) {
+  .toolbar {
+    gap: 4px;
+    padding: 6px 8px;
+    padding-top: calc(6px + env(safe-area-inset-top));
+  }
+  .toolbar button {
+    font-size: 13px;
+    padding: 8px 12px;
+    min-height: 44px;
+  }
+  .toolbar .status {
+    font-size: 11px;
+    margin-left: 4px;
+    flex-basis: 100%;
+    order: 10;
+  }
+  .toolbar-right {
+    gap: 4px;
+  }
+  .main-content {
+    flex-direction: column;
+  }
+  .grid-section {
+    min-height: 40vh;
+    max-height: 50vh;
+  }
+  .dash-section {
+    min-height: 40vh;
+  }
+  .grid-wrapper {
+    padding: 4px;
+  }
+  .role-select {
+    height: 44px;
+    min-height: 44px;
+    width: 110px;
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+  .roster-grid {
+    font-size: 13px;
+  }
+  .role-header {
+    min-width: 110px;
+    font-size: 12px;
+  }
+  .dash-grid {
+    gap: 4px;
+  }
+  .dash-member {
+    min-height: 44px;
+    padding: 4px 6px;
+  }
+  .legend {
+    font-size: 11px;
+  }
+}
+
+/* ── Small phones ── */
+@media (max-width: 480px) {
+  .app-container {
+    font-size: 14px;
+  }
+  .toolbar button {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  .grid-wrapper {
+    padding: 2px;
+  }
+}
+
+/* ── Dialogs / Overlays — ensure no clipping on mobile viewport ── */
+@media (max-height: 600px) {
+  .scroll-area {
+    max-height: 100dvh;
+  }
+}
+
+/* Global tap highlight removal for Android WebView */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+button, select {
+  touch-action: manipulation;
+}

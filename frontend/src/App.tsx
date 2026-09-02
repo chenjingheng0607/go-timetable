@@ -19,7 +19,6 @@ function App() {
     setSelections,
     statusMsg,
     statusColor,
-    go,
     setStatusMsg,
     setStatusColor,
     handleLoadFile,
@@ -39,7 +38,7 @@ function App() {
 
   const selectionProps = useSelections(selections, setSelections, rosterData, theme);
 
-  const { handleExportImage } = useImageExport(rosterData, containerRef, go, setStatusMsg, setStatusColor);
+  const { handleExportImage } = useImageExport(rosterData, containerRef, setStatusMsg, setStatusColor);
 
   return (
     <div className="app-container">

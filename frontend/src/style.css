@@ -1,10 +1,29 @@
+html {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
 html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
   background-color: #1e1e1e;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 #root {
   height: 100vh;
+  height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Remove double-tap zoom delay and blue overlay on all interactive elements */
+button, select, a, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }

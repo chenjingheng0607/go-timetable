@@ -19,15 +19,24 @@ export function Toolbar({
   onExportImage,
   onToggleTheme,
 }: ToolbarProps) {
+  // Ensure handlers are bound and not disabled; log to console on click for Android WebView debugging
+  const wrap = (name: string, fn: () => void) => () => {
+    try {
+      console.log(`[Toolbar] ${name} clicked`);
+      fn();
+    } catch (e) {
+      console.error(`[Toolbar] ${name} handler error:`, e);
+    }
+  };
   return (
     <div className="toolbar">
-      <button onClick={onLoadFile}>Load File</button>
-      <button onClick={onSaveState}>Save State</button>
+      <button type="button" onClick={wrap("LoadFile", onLoadFile)}>Load File</button>
+      <button type="button" onClick={wrap("SaveState", onSaveState)}>Save State</button>
       <span className="status" style={{ color: statusColor }}>{statusMsg}</span>
       <div className="toolbar-right">
-        <button className="btn-sm" onClick={onClear}>Clear</button>
-        <button className="btn-sm" onClick={onExportImage}>Export Image</button>
-        <button className="btn-sm" onClick={onToggleTheme}>Theme: {currentTheme}</button>
+        <button type="button" className="btn-sm" onClick={wrap("Clear", onClear)}>Clear</button>
+        <button type="button" className="btn-sm" onClick={wrap("ExportImage", onExportImage)}>Export Image</button>
+        <button type="button" className="btn-sm" onClick={wrap("ToggleTheme", onToggleTheme)}>Theme: {currentTheme}</button>
       </div>
     </div>
   );
